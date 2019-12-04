@@ -1,6 +1,6 @@
 # load input --------------------------------------------------------------
 input <- "day01/input.txt"
-modules <- unlist(read.csv(input, header = FALSE))
+modules <- unlist(read.csv(input, header = FALSE), use.names = FALSE)
 
 
 # part 1 ------------------------------------------------------------------
@@ -11,8 +11,7 @@ fuel_needed <- function(mass) {
 }
 
 # fuel requirement
-part_one <- sum(fuel_needed(modules))
-
+sum(fuel_needed(modules))
 
 
 # part 2 ------------------------------------------------------------------
@@ -28,4 +27,4 @@ for (i in 1:length(modules)) {
 }
 
 # total fuel requirement is
-part_two <- total
+total

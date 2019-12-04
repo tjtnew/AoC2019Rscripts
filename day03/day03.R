@@ -35,8 +35,8 @@ extra_coords <- function(origin, path) {
 
 # generate coordinates for the entire wire path
 generate_wire <- function(wire) {
-    path = list()
-    path[[1]] = c(0, 0)
+    path <- list()
+    path[[1]] <- c(0, 0)
     for (i in 1:length(wire)) {
         coords <- extra_coords(path[[length(path)]], wire[i])
         path <- c(path, coords)
@@ -59,7 +59,7 @@ intersections <- combined_wire[duplicated(combined_wire)]
 
 # function to calculate manhattan distance (2d only)
 manhattan <- function(x, y) {
-    distance = abs(x[1] - y[1]) + abs(x[2] - y[2])
+    abs(x[1] - y[1]) + abs(x[2] - y[2])
 }
 
 # answer to part one
