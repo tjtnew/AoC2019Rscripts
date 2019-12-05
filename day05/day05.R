@@ -8,139 +8,107 @@ input <- unlist(read.csv(input, header = FALSE), use.names = FALSE)
 # calculate digits at particular unit in a number
 digits <- function(number, units){ number %/% units %% 10}
 
-
-# opcode functions --------------------------------------------------------
-opcode_binary <- function(input, index, parcode, f) {
-    index <- index + 1
-    if (parcode[3] == 0) {
-        x_position <- input[index]
-        x <- input[x_position + 1]
-    } else if(parcode[3] == 1) {
-        x <- input[index]
+# get_value function below from Maarten Demeyer 
+# https://github.com/mpjdem/adventofcode2019/blob/master/aoc19_day5.R
+# Function to retrieve the value of parameter N, depending on mode
+# Do not use for write positions, those are directly given as positions
+get_value <- function(input, parcodes, params, n) {
+    if (parcodes[n] == 1) {
+        params[n]
+    } else {
+        input[params[n] + 1]
     }
-    index <- index + 1
-    if (parcode[2] == 0) {
-        y_position <- input[index]
-        y <- input[y_position + 1]
-    } else if(parcode[2] == 1) {
-        y <- input[index]
-    }
-    index <- index + 1
-    out_position <- input[index]
-    input[out_position + 1] <- f(x, y)
-    
-    index <- index + 1
-    
-    return(list(input = input,
-                index = index))
 }
 
+# opcode functions --------------------------------------------------------
 opcode_1 <- function(input, index, parcode) {
-    opcode_binary(input, index, parcode, `+`)
+    parameters <- input[index + 1:3]
+    x <- get_value(input, parcode, parameters, 1)
+    y <- get_value(input, parcode, parameters, 2)
+    input[parameters[3] + 1] <- x + y
+    index <- index + 4
+    return(list(input = input, index = index))
 }
 
 opcode_2 <- function(input, index, parcode) {
-    opcode_binary(input, index, parcode, `*`)
+    parameters <- input[index + 1:3]
+    x <- get_value(input, parcode, parameters, 1)
+    y <- get_value(input, parcode, parameters, 2)
+    input[parameters[3] + 1] <- x * y
+    index <- index + 4
+    return(list(input = input, index = index))
 }
 
 opcode_3 <- function(input, index, value) {
-    index <- index + 1
-    position <- input[index]
-    input[position + 1] <- as.integer(value)
-    index <- index + 1
-    
-    return(list(input = input,
-                index = index))
+    parameter <- input[index + 1]
+    input[parameter + 1] <- as.integer(value)
+    index <- index + 2
+    return(list(input = input, index = index))
 }
 
 opcode_4 <- function(input, index, parcode) {
-    index <- index + 1
-    if (parcode[3] == 0) {
-        position <- input[index]
-        print(input[position + 1])
-    } else if (parcode[3] == 1) {
-        print(input[index])
-    }
-    index <- index + 1
-    
-    return(list(input = input,
-                index = index))
-}
-
-opcode_jump <- function(input, index, parcode, f) {
-    if (parcode[3] == 0) {
-        position <- input[index + 1]
-        value <- input[position + 1]
-    } else {
-        value <- input[index + 1]
-    }
-    if (f(value, 0)) {
-        if (parcode[2] == 0) {
-            position <- input[index + 2]
-            value <- input[position + 1]
-            index <- value + 1
-        } else {
-            value <- input[index + 2]
-            index <- value + 1
-        }
-    } else {
-        index <- index + 3
-    }
-    
-    return(list(input = input,
-                index = index))
+    x <- get_value(input, parcode, input[index + 1], 1)
+    print(x)
+    index <- index + 2
+    return(list(input = input, index = index))
 }
 
 opcode_5 <- function(input, index, parcode) {
-    opcode_jump(input, index, parcode, `!=`)
+    parameters <- input[index + 1:2]
+    x <- get_value(input, parcode, parameters, 1)
+    if (x != 0) {
+        y <- get_value(input, parcode, parameters, 2)
+        index <- y + 1
+    } else {
+        index <- index + 3
+    }
+    return(list(input = input, index = index))
 }
 
 opcode_6 <- function(input, index, parcode) {
-    opcode_jump(input, index, parcode, `==`)
-}
-
-opcode_compare <- function(input, index, parcode, f) {
-    if (parcode[3] == 0) {
-        position <- input[index + 1]
-        value_1 <- input[position + 1]
+    parameters <- input[index + 1:2]
+    x <- get_value(input, parcode, parameters, 1)
+    if (x == 0) {
+        y <- get_value(input, parcode, parameters, 2)
+        index <- y + 1
     } else {
-        value_1 <- input[index + 1]
+        index <- index + 3
     }
-    
-    if (parcode[2] == 0) {
-        position <- input[index + 2]
-        value_2 <- input[position + 1]
-    } else {
-        value_2 <- input[index + 2]
-    }
-    
-    out_position <- input[index + 3]
-    if (f(value_1, value_2))  {
-        input[out_position + 1] <- 1
-    } else {
-        input[out_position + 1] <- 0
-    }
-    index <- index + 4
-    
-    return(list(input = input,
-                index = index))
+    return(list(input = input, index = index))
 }
 
 opcode_7 <- function(input, index, parcode) {
-    opcode_compare(input, index, parcode, `<`)
+    parameters <- input[index + 1:3]
+    x <- get_value(input, parcode, parameters, 1)
+    y <- get_value(input, parcode, parameters, 2)
+    if (x < y)  {
+        input[parameters[3] + 1] <- 1
+    } else {
+        input[parameters[3] + 1] <- 0
+    }
+    index <- index + 4 
+    return(list(input = input, index = index))
 }
 
 opcode_8 <- function(input, index, parcode) {
-    opcode_compare(input, index, parcode, `==`)
+    parameters <- input[index + 1:3]
+    x <- get_value(input, parcode, parameters, 1)
+    y <- get_value(input, parcode, parameters, 2)
+    if (x == y)  {
+        input[parameters[3] + 1] <- 1
+    } else {
+        input[parameters[3] + 1] <- 0
+    }
+    index <- index + 4 
+    return(list(input = input, index = index))
 }
 
-# build the Intcode computer ----------------------------------------------
-
+# intcode computer --------------------------------------------------------
 intcode_computer <- function(input, value) {
     index <- 1
     code <- digits(input[index], 10^(4:0))
     opcode <- as.integer(paste0(code[4],code[5]))
-    parcode <- code[1:3]
+    parcode <- code[3:1]
     
     while(opcode != 99) {
         if (opcode == 1) {
@@ -167,8 +135,7 @@ intcode_computer <- function(input, value) {
         index <- result$index
         code <- digits(input[index], 10^(4:0))
         opcode <- as.integer(paste0(code[4],code[5]))
-        parcode <- code[1:3]
-        
+        parcode <- code[3:1]
     }
 }
 
@@ -179,6 +146,3 @@ intcode_computer(input, value = 1)
 
 # Answer to part two ------------------------------------------------------
 intcode_computer(input, value = 5)
-
-
-

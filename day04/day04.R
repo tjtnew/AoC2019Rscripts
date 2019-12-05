@@ -14,7 +14,10 @@ range = 183564:657474
 # function definitions ----------------------------------------------------
 
 # integer division then modulo division by 10 on result
-digits <- function(number, units){ number %/% units %% 10}
+digits <- function(number, max_exp) {
+    powers <- 10^(max_exp:0)
+    (number %/% powers) %% 10
+}
 
 # function to check if vector monotonically increasing
 # from https://stackoverflow.com/a/13094801/10746205
@@ -37,7 +40,7 @@ is_valid_part_two <- function(x) {
 # part one ----------------------------------------------------------------
 
 # convert to digits
-range_digits <- lapply(range, digits, units = 10^c(5:0))
+range_digits <- lapply(range, digits, max_exp = 5)
 
 # valid integers (logical)
 tmp = lapply(range_digits, is_valid_part_one)
