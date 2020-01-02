@@ -62,7 +62,6 @@ tmp <- layout[2:6, 2:6]
 sum(powers[which(tmp == "#", arr.ind = TRUE)])
 
 
-
 # part two ----------------------------------------------------------------
 
 up_neighbours <- function(layers, id, x, y) {
@@ -148,14 +147,15 @@ layout <- matrix(instructions, nrow = 5, ncol = 5, byrow = TRUE)
 layers <- lapply(1:403, function(x) matrix(".", nrow = 5, ncol = 5))
 layers[[202]] <- layout
 
-
+# run for 200 minutes
 for (minutes in 1:200) {
-    print(minutes)
     new_layers <- layers
-    for (i in 2:402) {
+    # each minute potentially brings another pair of layers in to play
+    for (i in (202 - minutes):(202 + minutes)) {
         new_layers[[i]] <- update_layer(layers, i)
     }
     layers <- new_layers
 }
 
+# part two answer
 sum(sapply(layers, function(x) sum(x == "#")))
