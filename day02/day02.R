@@ -1,42 +1,42 @@
 # load data ---------------------------------------------------------------
-input <- "day02/input.csv"
+input <- "day02/input"
 input <- unlist(read.csv(input, header = FALSE), use.names = FALSE)
 
+# load intcode computer
+# devtools::install_github("tjtnew/intcode")
+library(intcode)
 
-# build the Intcode computer ----------------------------------------------
-intcode_computer <- function(input) {
-    index <- 1
-    opcode <- input[index]
-    while (opcode != 99) {
-        x_position <- input[index + 1]
-        y_position <- input[index + 2]
-        out_position <- input[index + 3]
-        
-        x = input[x_position + 1]
-        y = input[y_position + 1]
-        if (opcode == 1) {
-            input[out_position + 1] <- x + y
-        } else if (opcode == 2) {
-            input[out_position + 1] <- x * y
-        } else {
-            stop("unknown opcode")
+# default state settings
+state <- list()
+state$value <- 0
+state$relative_base <- 0
+state$index <- 1
+state$input <- input
+
+# run the intcode computer with no additional input
+run_intcode <- function(state) {
+    finished = FALSE
+    output <- NULL
+    while(!finished) {
+        state <- intcode(state)
+        finished <- state$finished
+        if(!finished) {
+            output <- c(output, state$output)
         }
-        
-        index <- index + 4
-        opcode <- input[index]
     }
-    input
+    state
 }
 
 
 # part 1 ------------------------------------------------------------------
 # set the initial state
 # remember R indexes from 1 but AoC using index from 0 for this problem
-input[2] <- 12
-input[3] <- 2
+tmp <- state
+tmp$input[2] <- 12
+tmp$input[3] <- 2
 
 # calculate the value in position 0 (index 1) after intcode_computer halts
-intcode_computer(input)[1]
+intcode(tmp)$input[1]
 
 
 # part two ----------------------------------------------------------------
@@ -51,13 +51,13 @@ target <- 19690720
 
 # continue until output is the desired value
 while (output != target) {
-    tmp <- input
+    tmp <- state
     pair <- possible_pairs[index, ]
     noun <- pair[ , 1]
     verb <- pair[ , 2]
-    tmp[2] <- noun
-    tmp[3] <- verb
-    output <- intcode_computer(tmp)[1]
+    tmp$input[2] <- noun
+    tmp$input[3] <- verb
+    output <- intcode(tmp)$input[1]
     index <- index + 1
 }
 

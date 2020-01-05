@@ -1,16 +1,14 @@
 # load input --------------------------------------------------------------
-input <- "day01/input.txt"
+input <- "day01/input"
 modules <- unlist(read.csv(input, header = FALSE), use.names = FALSE)
 
 
 # part 1 ------------------------------------------------------------------
-
-# function to calculate fuel based on mass
 fuel_needed <- function(mass) {
     floor(mass / 3) - 2
 }
 
-# fuel requirement
+# sum of fuel requirements
 sum(fuel_needed(modules))
 
 
@@ -26,5 +24,5 @@ for (i in 1:length(modules)) {
     }
 }
 
-# total fuel requirement is
+# sum of fuel requirements taking in to account added fuel
 total
