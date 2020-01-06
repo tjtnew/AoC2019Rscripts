@@ -1,15 +1,9 @@
-# load data 
+# load data ---------------------------------------------------------------
 input_file <- "day03/input"
+wires <- strsplit(readLines(input_file), ",")
 
-# open connection, read input, close connection
-# https://stackoverflow.com/a/4106976/10746205
-con <- file(input_file, open = "r")
-wires=list()
-while(length(one_line <- readLines(con, n = 1, warn = FALSE)) > 0) {
-    directions <- strsplit(one_line, ",")
-    wires <- c(wires, directions)
-}
-close.connection(con)
+
+# part one ----------------------------------------------------------------
 
 # generate coordinates based on an origin point and a path
 extra_coords <- function(origin, path) {
@@ -57,11 +51,57 @@ manhattan <- function(x, y) {
     abs(x[1] - y[1]) + abs(x[2] - y[2])
 }
 
-# answer to part one
+# answer
 distances <- lapply(intersections, manhattan, c(0,0))
 distances <- distances[distances > 0]
 min(unlist(distances))
 
-# answer to part two
-# ignore the origin when calculating both intersections and steps
+
+# part two ----------------------------------------------------------------
+
+# answer - ignore the origin when calculating both intersections and steps
 min((match(intersections[-1], wire_1) + match(intersections[-1], wire_2))) - 2
+
+
+# visualisations ----------------------------------------------------------
+
+# convert to matrix for plotting
+wire_1 <- do.call(rbind, wire_1)
+wire_2 <- do.call(rbind, wire_2)
+intersections <- do.call(rbind, intersections)
+
+# function for plotting (calls x11 as rstudio plot window is slow)
+wire_vis <- function(w1, w2, intersections, static = TRUE) {
+    x11(bg="black", type = "nbcairo")
+    plot(rbind(w1, w2), type="n", xaxt = "n", yaxt="n", asp = 1)
+    if (static) {
+        lines(w1, col = "yellow")
+        lines(w2, col = "red")
+        points(intersections, col = "white", pch = 15, cex = 0.5)    
+    } else {
+        min_len <- min(nrow(w1), nrow(w2))
+        max_len <- max(nrow(w1), nrow(w2))
+        w1 <- as.data.frame(w1)
+        w2 <- as.data.frame(w2)
+        for (i in 1:min_len) {
+            points(w1[i,], col = "red", pch = ".")
+            points(w2[i,], col = "yellow", pch = ".")
+        }
+        if (nrow(w1) > min_len) {
+            for (i in (min_len + 1):max_len) {
+                points(w1[i,], col = "red", pch = ".")
+            }   
+        } else if (nrow(w2) > min_len) {
+            for (i in (min_len + 1):max_len) {
+                points(w2[i,], col = "yellow", pch = ".")
+            }
+        }
+    }
+}
+    
+# static vis
+wire_vis(wire_1, wire_2, intersections, static = TRUE)
+
+# dynamic vis
+wire_vis(wire_1, wire_2, intersections, static = FALSE)
+
