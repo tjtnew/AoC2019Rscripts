@@ -32,7 +32,8 @@ for (i in 1:height) {
 
 # need to rotate 90 degrees before plotting
 rotate <- function(x) t(apply(x, 2, rev))
-image(x = 1:width,
+a = image(x = 1:width,
       y = 1:height,
       rotate(picture),
-      col = c("white", "black"), asp = 1)
+      col = c("white", "black"), 
+      asp = 1, xaxt = "n", yaxt = "n", ann = FALSE, bty = "n")
