@@ -16,13 +16,9 @@ state$input <- input
 # run the intcode computer with no additional input
 run_intcode <- function(state) {
     finished = FALSE
-    output <- NULL
     while(!finished) {
         state <- intcode(state)
         finished <- state$finished
-        if(!finished) {
-            output <- c(output, state$output)
-        }
     }
     state
 }
