@@ -58,18 +58,15 @@ y = results$y[200]
 100*(x-1) + y-1
 
 
-# visualisation -----------------------------------------------------------
-
-#
-# method 1 - less flickering as only one plot is ever made.
-#            best for a live visualisation.
-#
+# visualisation method 1 --------------------------------------------------
+# this method is a little hacky but leads to a plot with no flickering as only 
+# one plot is ever made.  It is thus best for a live (interactive session) 
+# visualisation.
 
 # arrange asteroids for plotting
 roids <- results[, c(2,1)] 
 roids$y <- -roids$y
 base <- data.frame(x = x_coord, y = -y_coord)
-
 
 # calls x11 as rstudio plotting window is slow
 x11(bg="black", type = "nbcairo")
@@ -104,9 +101,10 @@ for (i in seq_len(nrow(roids))) {
     }
 }
 
-#
-# method 2 - use to make multiple png's that you can knit in to gif
-#            with imagemagick.
+
+# visualisation method 2 --------------------------------------------------
+# this method is how I make the gif of the asteroids being shot down. It uses
+# the magick R package to knit together a set of pngs.
 
 # arrange asteroids for plotting
 roids <- results[, c(2,1)] 
@@ -137,7 +135,3 @@ tmp <- image_read(png_files)
 animation <- image_animate(tmp)
 image_write(animation, "day10/day10.gif")
 file.remove(png_files)
-
-
-
-
