@@ -57,3 +57,47 @@ x = results$x[200]
 y = results$y[200]
 100*(x-1) + y-1
 
+
+# visualisation -----------------------------------------------------------
+
+# arrange asteroids for plotting
+roids <- results[, c(2,1)] 
+roids$y <- -roids$y
+base <- data.frame(x = x_coord, y = -y_coord)
+
+# calls x11 as rstudio plotting window is slow
+x11(bg="black", type = "nbcairo")
+plot(rbind(roids, base), xaxt = "n", yaxt="n", asp = 1,
+     col = c(rep("white", nrow(roids)), "green"), cex = 2, pch = 16)
+
+# to stop the title shadowing when we update the plot I draw a rectangle over 
+# the top on of my previous title (see https://stackoverflow.com/a/35527994)
+# if using something like ggplot this would not be necessary
+coord <- par("usr")
+y_mid <- par("mai")[3] / 2
+height <- 0.5
+conv <- diff(grconvertY(y = 0:1, from = "inches", to = "user"))
+
+# iterate through the asteroids
+for (i in seq_len(nrow(roids))) {
+    lines(rbind(roids[i,], base), col = "red")
+    points(roids[i, ], col = "red", pch = 16, cex = 2)
+    Sys.sleep(0.05)
+    rect(xleft = coord[1],
+         xright = coord[2],
+         ybottom = coord[4] + (y_mid * (1 - height) * conv),
+         ytop = coord[4] + (y_mid * (1 + height) * conv),
+         xpd = TRUE,
+         col="black")
+    points(roids[i, ], col = "black", pch = 16, cex = 2)
+    title(paste("Asteroids destroyed = ", i), col.main = "white")
+    lines(rbind(roids[i,], base), col = "black", lwd = 2)
+    points(base, col = "green", cex = 2, pch = 16)
+    if (i < nrow(results)) {
+        points(roids[(i+1):nrow(roids), ], col = "white", pch = 16, cex = 2)    
+    }
+}
+
+
+
+
