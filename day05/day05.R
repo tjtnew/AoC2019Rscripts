@@ -12,9 +12,6 @@ run_intcode <- function(state) {
     while(!finished) {
         state <- intcode(state)
         finished <- state$finished
-        if(!finished) {
-            output <- c(output, state$output)
-        }
     }
     state
 }
