@@ -1,5 +1,5 @@
 # load data ---------------------------------------------------------------
-input <- "~/projects/AoC2019Rscripts/day12/input"
+input <- "day12/input"
 input <- readLines(input)
 
 # match positive or negative characters and convert to integers
