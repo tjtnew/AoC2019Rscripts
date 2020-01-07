@@ -85,7 +85,7 @@ for (i in seq_len(nrow(roids))) {
     Sys.sleep(0.05)
     rect(xleft = coord[1],
          xright = coord[2],
-         ybottom = coord[4] + (y_mid * (1 - height) * conv),
+         ybottom = coord[4] + (y_mid * (1 - height) * conv) - 2,
          ytop = coord[4] + (y_mid * (1 + height) * conv),
          xpd = TRUE,
          col="black")
