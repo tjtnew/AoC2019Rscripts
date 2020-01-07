@@ -40,6 +40,7 @@ state$value <- NULL
 finished = FALSE
 codes <- NULL
 
+# base R version of Adam Gruer's vis (https://twitter.com/AdamGruer/status/1205677788541247488)
 # colours from hyperBubble_palette (https://github.com/moldach/vapoRwave)
 bg_col <- "#852942"
 wall_col <- "#96BDE4" 
