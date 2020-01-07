@@ -10,81 +10,50 @@ height <- length(input)
 input <- unlist(strsplit(input, ""))
 space <- matrix(input, nrow = height, ncol = width, byrow = TRUE)
 
-# function to calculate angle between to points (from north and clockwise)
+# angles of other asteroids from station (relative to north)
 # cheers K. Miller (stackoverflow https://math.stackexchange.com/a/1596518)
-atan2_mod <- function(a1, a2, b1, b2) {
-    #theta <- atan2(b1 - a1, b2 - a2)
-    theta <- atan2(b1 - a1, a2-b2)
-    if (theta < 0) {
-        theta = theta + 2*pi
-    }
+asteroid_angles <- function(base_x, base_y, asteroids) {
+    roids <- asteroids[asteroids[, 1] != base_y | asteroids[, 2] != base_x, ]
+    x <- roids[, 2] - base_x
+    y <- roids[, 1] - base_y
+    theta <- atan2(x, -y)
+    theta[theta < 0] <- theta[theta < 0] + 2*pi
     theta
 }
 
-# asteroids visible from point
-point_asteroids <- function(x, y, width, height, space) {
-    angles <- list()
-    for (i in 1:height) {
-        for (j in 1:width) {
-            if ((space[i, j] == "#") && ((i != y) || (j != x))) {
-                angles <- union(angles, atan2_mod(x, y, j, i))
-            }
-        }
-    }
-    length(angles)
-}
-
 # part one ----------------------------------------------------------------
-max_num_visible <- 0
-for (i in 1:height) {
-    for (j in 1:width) {
-        if (space[i, j] == "#") {
-            num_visible <- point_asteroids(j, i, width, height, space)
-            if (num_visible > max_num_visible) {
-                max_num_visible <- num_visible
-                x_coord = j
-                y_coord = i
-            }
-        }
-    }
-}
-x_coord
-y_coord
-max_num_visible
+asteroids <- which(space == "#", arr.ind = TRUE)
+
+angles <- mapply(asteroid_angles, asteroids[, 2], asteroids[, 1],
+                 MoreArgs = list(asteroids = asteroids), SIMPLIFY = FALSE)
+
+num_visible <- lapply(angles, function(x) length(unique(x)))
+max(unlist(num_visible))
 
 
 # part two ----------------------------------------------------------------
-asteroids <- list()
-for (i in 1:height) {
-    for (j in 1:width) {
-        if ((space[i, j] == "#") && ((i != y_coord) || (j != x_coord))) {
-            angle <- atan2_mod(x_coord, y_coord, j, i)
-            distance <- sqrt((x_coord - j)^2 + (y_coord - i)^2)
-            asteroids <- c(asteroids, list(c(angle, distance, j, i)))
-        }
-    }
-}
+x_coord <- asteroids[which.max(unlist(num_visible)), 2]
+y_coord <- asteroids[which.max(unlist(num_visible)), 1]
 
-# pull out angles, distances and coordinates
-angles <- unlist(lapply(asteroids, `[`, 1))
-distances <- unlist(lapply(asteroids, `[`, 2))
-x_coords <- unlist(lapply(asteroids, `[`, 3))
-y_coords <- unlist(lapply(asteroids, `[`, 4))
+# calculate distances for each asteroid
+idx <- asteroids[, 1] != y_coord | asteroids[, 2] != x_coord
+other_asteroids <- asteroids[idx, ]
+other_asteroid_angles <- angles[[which.max(unlist(num_visible))]]
+others <- cbind(other_asteroids, other_asteroid_angles)
+distances <- sqrt((others[, 1] - y_coord)^2 + (others[, 2] - x_coord)^2)
+others <- cbind(others, distances)
 
-# put in dataframe for easy sorting
-results <- data.frame(angles = angles, 
-                      distances = distances,
-                      x = x_coords,
-                      y = y_coords)
-
-results <- results[with(results, order(angles, distances)), ]
+# put in dataframe for easy manipulation
+results <- as.data.frame(others)
+colnames(results) <- c("y", "x", "angles", "distances")
 
 # need to add counter so we can ensure we count an angle once on each rotation
+results <- results[with(results, order(angles, distances)), ]
 results$counter <- with(results, ave(angles, angles, FUN = seq_along))
 results <- results[with(results, order(counter,angles, distances)), ]
 
 # answer!
-x = results[200, 3]
-y = results[200, 4]
+x = results$x[200]
+y = results$y[200]
 100*(x-1) + y-1
 
