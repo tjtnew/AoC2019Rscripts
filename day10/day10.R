@@ -60,10 +60,16 @@ y = results$y[200]
 
 # visualisation -----------------------------------------------------------
 
+#
+# method 1 - less flickering as only one plot is ever made.
+#            best for a live visualisation.
+#
+
 # arrange asteroids for plotting
 roids <- results[, c(2,1)] 
 roids$y <- -roids$y
 base <- data.frame(x = x_coord, y = -y_coord)
+
 
 # calls x11 as rstudio plotting window is slow
 x11(bg="black", type = "nbcairo")
@@ -97,6 +103,40 @@ for (i in seq_len(nrow(roids))) {
         points(roids[(i+1):nrow(roids), ], col = "white", pch = 16, cex = 2)    
     }
 }
+
+#
+# method 2 - use to make multiple png's that you can knit in to gif
+#            with imagemagick.
+
+# arrange asteroids for plotting
+roids <- results[, c(2,1)] 
+roids$y <- -roids$y
+base <- data.frame(x = x_coord, y = -y_coord)
+
+png(filename = "day10/Rplot%03d.png", bg = "black")
+plot(rbind(roids, base), xaxt = "n", yaxt="n", asp = 1, 
+     col = c(rep("white", nrow(roids)), "green"), pch = 16)
+
+# iterate through the asteroids
+for (i in seq_len(nrow(roids))) {
+    plot(roids, type="n", xaxt = "n", yaxt="n", asp = 1)
+    points(rbind(roids[i:nrow(roids), ], base),
+           col = c(rep("white", nrow(roids) - (i - 1)), "green"), pch = 16)
+    title(paste("Asteroids destroyed = ", i - 1), col.main = "white")
+    lines(rbind(roids[i,], base), col = "red")
+    points(roids[i, ], col = "red", pch = 16)
+}
+plot(roids, type="n", xaxt = "n", yaxt="n", asp = 1)
+points(base, col = "green", pch = 16)
+title(paste("Asteroids destroyed = ", i), col.main = "white")
+dev.off()
+
+library(magick)
+png_files <- paste0("day10/", list.files("day10/", "*.png"))
+tmp <- image_read(png_files)
+animation <- image_animate(tmp)
+image_write(animation, "day10/day10.gif")
+file.remove(png_files)
 
 
 
