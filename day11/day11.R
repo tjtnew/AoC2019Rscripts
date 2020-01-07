@@ -1,9 +1,9 @@
 # load data ---------------------------------------------------------------
-input <- "~/projects/AoC2019Rscripts/day11/input"
+input <- "day11/input"
 input <- as.numeric(unlist(read.csv(input, header = FALSE), use.names = FALSE))
 
-# source intcode computer (copied from day 09) ----------------------------
-source("~/projects/AoC2019Rscripts/day11/intcode.R")
+# load intcode computer 
+library(intcode)
 
 # helper functions --------------------------------------------------------
 # calculate new coordinates based on current direction and rotation
@@ -52,15 +52,14 @@ run_robot<- function(starting_colour) {
     
     finished = FALSE
     while(!finished) {
-        # run intcode computer twice to get both values
-        state <- generic_intcode_computer(state)
-        state <- generic_intcode_computer(state)
+        # run intcode computer twice to get both colour and rotation
+        state <- intcode(state)
+        colour <- state$output
+        state <- intcode(state)
+        rotation <- state$output
         finished <- state$finished
         
-        # get colour and rotation
-        tmp <- tail(state$output, 2)
-        colour <- tmp[1]
-        rotation <- tmp[2]
+        if (finished) break
         
         # paint squares and remove from other list
         tmp <- string_coordinate(current_coordinates)
@@ -106,4 +105,5 @@ white <- strsplit(result$white, "x")
 white <- lapply(white, as.integer)
 x <- unlist(lapply(white, `[`, 1))
 y <- unlist(lapply(white, `[`, 2))
-plot(x,y,pch=15, asp = 1, cex=2)
+plot(x,y,pch=15, asp = 1, cex=2,
+     xaxt = "n", yaxt = "n", ann = FALSE, bty = "n")
