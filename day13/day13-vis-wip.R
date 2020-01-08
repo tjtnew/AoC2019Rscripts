@@ -21,6 +21,14 @@ run_intcode <- function(state) {
     state
 }
 
+# function to put plotting coordinates and values in to dataframe
+instructions_to_dat <- function(x) {
+    tmp <- split(x, (seq_along(x) - 1) %% 3 + 1)
+    data.frame(x = tmp[[1]],
+               y = -tmp[[2]], # flip for screen
+               z = tmp[[3]])
+}
+
 # part one ----------------------------------------------------------------
 state <- list()
 state$relative_base <- 0
@@ -30,6 +38,7 @@ instructions <- run_intcode(state)$all_output
 sum(instructions[c(FALSE, FALSE, TRUE)] == 2)
 
 # part two ----------------------------------------------------------------
+vis <- TRUE # set false if you do not want the vis
 state <- list()
 state$relative_base <- 0
 state$index <- 1
@@ -48,30 +57,42 @@ block_col <- "#F599A6"
 paddle_col <- "#ECE976"
 ball_col <- "#44B05B"
 
-plot_coords <- split(instructions, (seq_along(instructions) - 1) %% 3 + 1)
-plot_coords <- data.frame(x = plot_coords[[1]],
-                          y = -plot_coords[[2]],
-                          z = plot_coords[[3]])
+# coordinates for initial layout
+plot_coords <- instructions_to_dat(instructions)
 
-x11(bg = bg_col, type = "nbcairo", height = 5)
-plot(plot_coords[,1:2], type="n", xaxt = "n", yaxt="n", asp = 1,
-     xlab = "", ylab = "", bty = "n")
-points(plot_coords[,c("x","y")], 
-       pch = 15, 
-       col = c(bg_col, wall_col, block_col, paddle_col, ball_col)[plot_coords$z + 1],
-       cex = 1.25)
+# initialise score
+score = 0
 
-# to stop the title shadowing when we update the plot I draw a rectangle over 
-# the top on of my previous title (see https://stackoverflow.com/a/35527994)
-# if using something like ggplot this would not be necessary
-coord <- par("usr")
-y_mid <- par("mai")[3] / 2
-height <- 0.5
-conv <- diff(grconvertY(y = 0:1, from = "inches", to = "user"))
+if (vis) {
+    # start x11 window with no buffering (RStudio's built in plot buffers badly)
+    x11(bg = bg_col, type = "nbcairo", height = 5)
+    
+    # create empty plot with correct dimensions
+    plot(plot_coords[,1:2], type="n", bty = "n", 
+         xaxt = "n", yaxt="n", xlab = "", ylab = "", asp = 1)
+    
+    # plot initial layout of the screen
+    points(plot_coords[,c("x","y")], 
+           pch = 15, 
+           col = c(bg_col, wall_col, block_col, paddle_col, ball_col)[plot_coords$z + 1],
+           cex = 1.25)
+    
+    # DO NOT CHANGE GRAPH DIMENSIONS AFTER THIS STEP
+    # hack - to stop the title shadowing when we update the plot I draw a 
+    # rectangle over the top on of my previous title 
+    # (see https://stackoverflow.com/a/35527994). Not necessary if using ggplot
+    # IF GRAPH DIMENSIONS CHANGE TITLE MAY SHADOW
+    coord <- par("usr")
+    y_mid <- par("mai")[3] / 2
+    height <- 0.5
+    conv <- diff(grconvertY(y = 0:1, from = "inches", to = "user"))
+    
+}
 
 while(!finished) {
     state <- intcode(state)
     
+    # get information on how the game as progessed
     while (state$io == "out") {
         finished <- state$finished
         if (finished) break
@@ -79,50 +100,61 @@ while(!finished) {
         state <- intcode(state)
     }
     
-    plot_coords <- split(codes, (seq_along(codes) - 1) %% 3 + 1)
-    x <- plot_coords[[1]]
-    y <- plot_coords[[2]]
-    z <- plot_coords[[3]]
-    plot_coords <- data.frame(x = x, y = -y, z = z)
+    # put info in data frame
+    plot_coords <- instructions_to_dat(codes)
+    
+    # update score
     tmp <- plot_coords[plot_coords$x == -1 & plot_coords$y == 0, 3]
     if (length(tmp) == 1) {
         score <- tmp
     }
     
-    plot_coords <- plot_coords[!(plot_coords$x == -1 & plot_coords$y == 0), ]
-    rect(xleft = coord[1],
-         xright = coord[2],
-         ybottom = coord[4] + (y_mid * (1 - height) * conv) - 1,
-         ytop = coord[4] + (y_mid * (1 + height) * conv),
-         xpd = TRUE, border = NA,
-         col="#852942")
-    points(plot_coords[,c("x","y")], 
-           pch = 15, 
-           col = c(bg_col, wall_col, block_col, paddle_col, ball_col)[plot_coords$z + 1],
-           cex = 1.25)
-    title(paste("Score:", score), col.main = paddle_col, cex.main = 3)
+    if (vis) {
+        # remove score from plot coords
+        plot_coords <- plot_coords[!(plot_coords$x == -1 & plot_coords$y == 0), ]
+        
+        # plot rectangle over title
+        rect(xleft = coord[1],
+             xright = coord[2],
+             ybottom = coord[4] + (y_mid * (1 - height) * conv) - 1,
+             ytop = coord[4] + (y_mid * (1 + height) * conv),
+             xpd = TRUE, border = NA,
+             col="#852942")
+        
+        # plot changes on graph
+        points(plot_coords[,c("x","y")], 
+               pch = 15, 
+               col = c(bg_col, wall_col, block_col, paddle_col, ball_col)[plot_coords$z + 1],
+               cex = 1.25)
+        
+        # update title
+        title(paste("Score:", score), col.main = paddle_col, cex.main = 3)    
+    }
+    
     
     finished <- state$finished
     if (finished) break
     
+    # play the game automatically
     codes <- NULL
+    ball_pos_x <- plot_coords$x[which(plot_coords$z == 4)]
+    paddle_idx <- which(plot_coords$z == 3)
+    paddle_pos_x <- plot_coords$x[paddle_idx]
+    paddle_pos_y <- plot_coords$y[paddle_idx]
     
-    ball_pos <- which(z == 4)
-    ball_pos <- x[ball_pos]
-    
-    paddle_pos <- which(z == 3)
-    paddle_pos <- x[paddle_pos]
-    paddle_pos_y <- y[paddle_pos]
-    
-    if (ball_pos < paddle_pos) {
+    if (ball_pos_x < paddle_pos_x) {
         state$value <- -1
-    } else if (ball_pos > paddle_pos) {
+    } else if (ball_pos_x > paddle_pos_x) {
         state$value <- 1
     } else {
         state$value <- 0
-        codes <- c(paddle_pos, paddle_pos_y, 3)
+        codes <- c(paddle_pos_x, paddle_pos_y, 3)
     }
-    Sys.sleep(0.01)
+    
+    # if printing to screen slow the game down
+    if (vis) {
+        Sys.sleep(0.01)    
+    }
 }
 
 # answer

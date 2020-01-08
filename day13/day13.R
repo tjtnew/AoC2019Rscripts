@@ -21,14 +21,21 @@ run_intcode <- function(state) {
     state
 }
 
+# function to put plotting coordinates and values in to dataframe
+instructions_to_dat <- function(x) {
+    tmp <- split(x, (seq_along(x) - 1) %% 3 + 1)
+    data.frame(x = tmp[[1]],
+               y = -tmp[[2]], # flip for screen
+               z = tmp[[3]])
+}
+
 # part one ----------------------------------------------------------------
 state <- list()
 state$relative_base <- 0
 state$index <- 1
 state$input <- input
 instructions <- run_intcode(state)$all_output
-tmp <- split(instructions, ceiling(seq_along(instructions)/3))
-sum(unlist(lapply(tmp, `[`, 3)) == 2)
+sum(instructions[c(FALSE, FALSE, TRUE)] == 2)
 
 # part two ----------------------------------------------------------------
 state <- list()
@@ -41,9 +48,13 @@ state$value <- NULL
 finished = FALSE
 codes <- NULL
 
+# initialise score
+score = 0
+
 while(!finished) {
     state <- intcode(state)
     
+    # get information on how the game as progessed
     while (state$io == "out") {
         finished <- state$finished
         if (finished) break
@@ -51,40 +62,34 @@ while(!finished) {
         state <- intcode(state)
     }
     
+    # put info in data frame
+    plot_coords <- instructions_to_dat(codes)
+    
+    # update score
+    tmp <- plot_coords[plot_coords$x == -1 & plot_coords$y == 0, 3]
+    if (length(tmp) == 1) {
+        score <- tmp
+    }
+    
     finished <- state$finished
     if (finished) break
     
-    tmp <- split(codes, ceiling(seq_along(codes)/3))
+    # play the game automatically
     codes <- NULL
-    x <- unlist(lapply(tmp, `[`, 1))
-    y <- unlist(lapply(tmp, `[`, 2))
-    z <- unlist(lapply(tmp, `[`, 3))
+    ball_pos_x <- plot_coords$x[which(plot_coords$z == 4)]
+    paddle_idx <- which(plot_coords$z == 3)
+    paddle_pos_x <- plot_coords$x[paddle_idx]
+    paddle_pos_y <- plot_coords$y[paddle_idx]
     
-    ball_pos <- which(z == 4)
-    ball_pos <- x[ball_pos]
-    
-    paddle_pos <- which(z == 3)
-    paddle_pos <- x[paddle_pos]
-    paddle_pos_y <- y[paddle_pos]
-    
-    if (ball_pos < paddle_pos) {
+    if (ball_pos_x < paddle_pos_x) {
         state$value <- -1
-    } else if (ball_pos > paddle_pos) {
+    } else if (ball_pos_x > paddle_pos_x) {
         state$value <- 1
     } else {
         state$value <- 0
-        codes <- c(paddle_pos, paddle_pos_y, 3)
+        codes <- c(paddle_pos_x, paddle_pos_y, 3)
     }
 }
 
 # answer
-codes[length(codes)]
-
-
-
-
-
-
-
-
-
+score
